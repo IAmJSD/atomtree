@@ -1,4 +1,4 @@
-# tinyatom
+# atomtree
 
 A tiny library for global state management in React. ~1kb minified (and less gzipped).
 
@@ -13,7 +13,7 @@ A tiny library for global state management in React. ~1kb minified (and less gzi
 
 The entire library (without types) is ~130 lines of code and is in the `index.mjs` file. The types and documentation for each function are in the `index.d.ts` file. If you want to see na example of how to use the library, you can check out the `example` folder.
 
-For context of how this all works, tinyatom is built on the idea that you will have an object that repersents your state structure. In this example, it might look something like this:
+For context of how this all works, atomtree is built on the idea that you will have an object that repersents your state structure. In this example, it might look something like this:
 
 ```ts
 export const state = {
