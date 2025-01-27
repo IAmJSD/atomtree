@@ -3,10 +3,8 @@ import { useSyncExternalStore, useRef } from "react";
 const atomSym = Symbol("atom");
 
 export function atom(initialValue) {
-    let value = initialValue;
+    let valueHolder = [initialValue];
     const listeners = new Set();
-    const nonReactGet = () => value;
-    const initValGet = () => initialValue;
 
     return Object.freeze({
         use: () =>
@@ -15,25 +13,26 @@ export function atom(initialValue) {
                     listeners.add(onStoreChange);
                     return () => listeners.delete(onStoreChange);
                 },
-                nonReactGet,
-                initValGet,
-            ),
-        nonReactGet,
+                () => valueHolder,
+                () => [initialValue],
+            )[0],
+        nonReactGet: () => valueHolder[0],
         set: (newValue) => {
-            if (value !== newValue) {
-                value = newValue;
+            if (valueHolder[0] !== newValue) {
+                valueHolder = [newValue];
                 for (const listener of listeners) {
                     listener();
                 }
             }
         },
         mutate: (fn) => {
-            fn(value);
+            fn(valueHolder[0]);
+            valueHolder = [valueHolder[0]];
             for (const listener of listeners) {
                 listener();
             }
         },
-        [atomSym]: Object.freeze([initValGet, listeners]),
+        [atomSym]: Object.freeze([() => initialValue, listeners]),
     });
 }
 
@@ -89,13 +88,12 @@ function remapValues(structure, wantsInit) {
 }
 
 export function useAtomsFromStructure(structure) {
-    const initCached = useRef(atomSym);
-    const currentCached = useRef(atomSym);
+    const cacheRef = useRef([atomSym, atomSym]);
 
     return useSyncExternalStore(
         (onStoreChange) => {
             const flushCacheAndRecompute = () => {
-                currentCached.current = remapValues(structure);
+                cacheRef.current[0] = remapValues(structure);
                 onStoreChange();
             };
 
@@ -111,16 +109,16 @@ export function useAtomsFromStructure(structure) {
             };
         },
         () => {
-            if (currentCached.current === atomSym) {
-                currentCached.current = remapValues(structure);
+            if (cacheRef.current[0] === atomSym) {
+                cacheRef.current[0] = remapValues(structure);
             }
-            return currentCached.current;
+            return cacheRef.current[0];
         },
         () => {
-            if (initCached.current === atomSym) {
-                initCached.current = remapValues(structure, true);
+            if (cacheRef.current[1] === atomSym) {
+                cacheRef.current[1] = remapValues(structure, true);
             }
-            return initCached.current;
+            return cacheRef.current[1];
         },
     );
 }

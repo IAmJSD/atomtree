@@ -1,6 +1,6 @@
 {
     "name": "atomtree",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "A tiny global state management library for React.",
     "main": "index.mjs",
     "types": "index.d.ts",
@@ -21,6 +21,7 @@
         "@types/react-dom": "^19.0.0"
     },
     "scripts": {
-        "example": "vite ./example"
+        "example:render-counts": "vite ./examples/render-counts",
+        "example:todo-list": "vite ./examples/todo-list"
     }
 }
