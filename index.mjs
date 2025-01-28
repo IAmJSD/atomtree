@@ -3,23 +3,27 @@ import { useSyncExternalStore, useRef } from "react";
 const atomSym = Symbol("atom");
 
 export function atom(initialValue) {
-    let valueHolder = [initialValue];
+    let valueHolder = [initialValue, atomSym];
     const listeners = new Set();
+    const initValGet = () => initialValue;
 
     return Object.freeze({
-        use: () =>
-            useSyncExternalStore(
+        use: () => {
+            const v = useSyncExternalStore(
                 (onStoreChange) => {
                     listeners.add(onStoreChange);
                     return () => listeners.delete(onStoreChange);
                 },
                 () => valueHolder,
-                () => [initialValue],
-            )[0],
+                initValGet,
+            );
+            if (Array.isArray(v) && v[1] === atomSym) return v[0];
+            return v;
+        },
         nonReactGet: () => valueHolder[0],
         set: (newValue) => {
             if (valueHolder[0] !== newValue) {
-                valueHolder = [newValue];
+                valueHolder = [newValue, atomSym];
                 for (const listener of listeners) {
                     listener();
                 }
@@ -27,12 +31,12 @@ export function atom(initialValue) {
         },
         mutate: (fn) => {
             fn(valueHolder[0]);
-            valueHolder = [valueHolder[0]];
+            valueHolder = [valueHolder[0], atomSym];
             for (const listener of listeners) {
                 listener();
             }
         },
-        [atomSym]: Object.freeze([() => initialValue, listeners]),
+        [atomSym]: Object.freeze([initValGet, listeners]),
     });
 }
 
